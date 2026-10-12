@@ -1,56 +1,109 @@
 # BrandShield AI
 
-BrandShield AI is a full-stack brand-protection demo built with static HTML,
-CSS, and JavaScript, plus a Python FastAPI backend and SQLite database.
+BrandShield is a full-stack brand-monitoring service. It combines live
+reputation lookups with public search and app-store catalog results. Each
+account has private monitored brands, scan history, and findings.
 
-> **Demo only:** analysis and findings are simulated. Authentication is not
-> implemented, and the app does not scan real websites, social platforms, or
-> mobile applications. Do not use it for security decisions or real customer
-> data.
+## What a scan checks
 
-## Features
+- **Google Web Risk:** looks up the HTTPS homepage of an optional official
+  domain in Google's threat lists. The non-commercial Safe Browsing API is not
+  used. Web Risk receives the checked URL.
+- **VirusTotal:** reads an existing domain report; it does not submit URLs for
+  scanning. VirusTotal receives the domain lookup.
+- **Brave Search:** searches public results for social-profile candidates and
+  Google Play listings. Brand names are sent as search queries. Results are
+  unverified leads, not evidence that an account or app is fake. Brave Search
+  is usage-priced; review the current plan and add spending controls.
+- **Apple App Store Search:** searches Apple's public software catalog. Apple
+  receives the brand-name query.
 
-- Submit a brand name for a clearly labeled mock analysis.
-- Add and remove monitored brands in a local SQLite database.
-- Create simulated findings and update their status.
-- View summary reports and download report data as JSON.
+Google Play does not provide a public third-party app-catalog search API in its
+official Developer API. BrandShield uses Brave search results for Google Play
+listing discovery, not undocumented scraping or the publisher-only Developer
+API.
 
-## Requirements
-
-- Python 3.10 or newer
-- A modern web browser
-- VS Code Live Server, or another local static web server
+Provider coverage can be incomplete or delayed. An empty result is not a
+clean/safe verdict. Verify evidence with the source and investigate findings
+manually before taking action.
 
 ## Run locally
 
-1. Start the API from the `backend` directory:
+Requirements: Python 3.12+ and a modern browser.
+
+1. From the repository root, prepare a backend environment:
 
    ```powershell
    cd backend
    python -m venv .venv
    .venv\Scripts\Activate.ps1
    python -m pip install -r requirements.txt
-   python -m uvicorn main:app --reload --port 8000
+   Copy-Item .env.example .env
    ```
 
-   The API is available at <http://127.0.0.1:8000>; its interactive
-   documentation is at <http://127.0.0.1:8000/docs>.
+2. Generate a secret with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+   Put its output in `backend/.env` as `JWT_SECRET_KEY=...`. Add provider API
+   keys there if you have them. Never commit `.env` or paste secrets into
+   issues, source code, or chat.
 
-2. Serve the `frontend` directory using VS Code Live Server, or another local
-   static server. The API allows the default local origins on ports 5500 and
-   5501. Open the server's `index.html` page.
+3. Start the application from `backend`:
 
-The frontend API URL is configured in `frontend/js/api.js`. The SQLite
-database is created locally as `backend/brandshield.db`.
+   ```powershell
+   python -m uvicorn main:app --reload --port 8000 --env-file .env
+   ```
 
-## Current limitations
+   Open <http://127.0.0.1:8000>. The FastAPI docs are at
+   <http://127.0.0.1:8000/docs>. The API also serves the frontend, so do not
+   open the HTML with `file://` or use a separate static server.
 
-- Sign-in and registration forms are placeholders; no accounts are created.
-- Analysis and demo findings are mock data, not detections.
-- Data is stored in a local SQLite database without user isolation.
-- The frontend API URL and CORS origins are configured for local development.
-- This project has not been configured or tested for production deployment.
+The default database is local SQLite. The app creates its tables on first
+start. Existing prototype tables are left untouched.
 
-Before using it as a hosted service, implement and test authentication,
-authorization, production data storage, deployment-specific API/CORS settings,
-backups, and a data-retention policy.
+## Deploy to Railway
+
+1. Create a Railway project from this GitHub repository and add a PostgreSQL
+   service. Keep the web service to one running replica while using the
+   in-process login/register rate limiter.
+2. Set these variables in the web service:
+
+   - `APP_ENV=production`
+   - `DATABASE_URL=${{Postgres.DATABASE_URL}}` (use the reference for your
+     PostgreSQL service)
+   - `JWT_SECRET_KEY` to a unique, randomly generated secret of at least 32
+     characters
+   - `GOOGLE_WEBRISK_API_KEY`
+   - `VIRUSTOTAL_API_KEY`
+   - `BRAVE_SEARCH_API_KEY`
+   - `SCHEDULE_POLL_SECONDS=60`
+   - `SCHEDULE_BATCH_SIZE=3`
+
+   `ALLOWED_ORIGINS` may be left unset when the frontend is served by this
+   same-origin app. Never put provider keys in frontend JavaScript or GitHub.
+3. Deploy and check `/health`. Register a test account, then verify each
+   provider status and a scan before sharing the deployment.
+
+Provider accounts may require billing, API enablement, and key restrictions.
+Brave requests are usage-priced; schedule checks are opt-in and start no more
+often than once every 24 hours per brand. Set your own provider budget alerts.
+Railway hosting and provider usage are separate costs.
+
+## Privacy and account limitations
+
+Before each on-demand scan or when adding a monitored brand, the user must
+consent to external lookups. The app sends the brand name to Brave and Apple;
+when a domain is supplied, Google receives its HTTPS homepage URL and
+VirusTotal receives a domain-report request. No URLs are submitted to
+VirusTotal for scanning. Scheduled scans repeat the consented lookups.
+
+Passwords are Argon2-hashed, and sessions use signed HttpOnly cookies. The
+service has basic per-IP rate limits for account creation and sign-in. Email
+verification, password reset, multi-factor authentication, account deletion,
+shared/distributed rate limiting, and production backup/retention operations
+are not yet implemented. Review provider terms, privacy requirements, quotas,
+and applicable laws before operating this as a public commercial service.
+
+## Development checks
+
+Install optional test dependencies with `python -m pip install -r
+requirements-dev.txt` from `backend`, then run `python -m pytest` from the
+repository root.
