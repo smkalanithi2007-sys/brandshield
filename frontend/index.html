@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,90 +72,6 @@
           incur charges.
         </label>
         <button type="submit">Scan without saving</button>
-        <div id="analysis-result" class="result" role="status"></div>
-      </form>
-    </section>
-  </main>
-
-  <footer>© 2026 BrandShield AI · Live provider lookups and unverified search leads</footer>
-  <script src="js/api.js"></script>
-  <script src="js/script.js"></script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BrandShield AI | Digital Brand Protection</title>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <header class="navbar">
-    <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
-    <nav class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#analyze">Live scan</a>
-      <a href="login.html">Sign in</a>
-      <a href="register.html">Create account</a>
-      <a href="dashboard.html">Dashboard</a>
-    </nav>
-  </header>
-
-  <main>
-    <section class="hero">
-      <span class="pill">LIVE THREAT-INTELLIGENCE SOURCES</span>
-      <h1>Protect Your Brand.<br><span class="accent">Expose Digital Threats.</span></h1>
-      <p>Check live threat-reputation sources and discover public social-profile and app-store search results for your brand.</p>
-      <div class="actions">
-        <a class="button" href="#analyze">Run a live scan</a>
-        <a class="button button-secondary" href="#features">Explore Features</a>
-      </div>
-    </section>
-
-    <section class="section container" id="features">
-      <div class="section-heading">
-        <p class="eyebrow">PLATFORM FEATURES</p>
-        <h2>Digital protection in one workspace</h2>
-      </div>
-      <div class="grid">
-        <article class="card">
-          <h3>Profile Monitoring</h3>
-          <p>Find public profile search results for human review; a name match is not proof of impersonation.</p>
-        </article>
-        <article class="card">
-          <h3>Threat Intelligence</h3>
-          <p>Check configured threat-intelligence providers and review their evidence.</p>
-        </article>
-        <article class="card">
-          <h3>Risk Reports</h3>
-          <p>Track scans, provider status, and findings saved to your account.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section container" id="analyze">
-      <div class="section-heading">
-        <p class="eyebrow">ON-DEMAND SCAN</p>
-        <h2>Analyze a brand name</h2>
-        <p class="muted">Create an account to run scans and save findings. Provider results can be incomplete and require human review.</p>
-      </div>
-
-      <form id="analyze-form" class="form-card">
-        <label for="brand-name">Brand or profile name</label>
-        <input id="brand-name" name="brand_name" maxlength="100"
-          placeholder="e.g. Example Brand" required>
-        <label for="brand-domain">Official domain (optional)</label>
-        <input id="brand-domain" name="domain" maxlength="255"
-          placeholder="https://example.com">
-        <label>
-          <input id="provider-consent" type="checkbox" required>
-          I agree to send this brand name and domain to external providers:
-          Google Web Risk, VirusTotal report lookup, Brave Search, and Apple
-          Search. Search results are unverified leads, and Brave usage may
-          incur charges.
-        </label>
-        <button type="submit">Run live scan</button>
         <div id="analysis-result" class="result" role="status"></div>
       </form>
     </section>
