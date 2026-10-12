@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monitoring | BrandShield AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
+    <nav class="nav-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a class="active" href="monitoring.html">Monitoring</a>
+      <a href="threats.html">Threats</a>
+      <a href="reports.html">Reports</a>
+    </nav>
+  </header>
+
+  <main class="section container">
+    <div class="section-heading">
+      <p class="eyebrow">BRAND MANAGEMENT</p>
+      <h1>Monitored Brands</h1>
+      <p class="muted">Save brands and official domain references for your demo workspace.</p>
+    </div>
+
+    <form id="brand-form" class="form-card">
+      <label for="brand">Brand name</label>
+      <input id="brand" maxlength="100" required placeholder="Example Brand">
+      <label for="domain">Official domain (optional)</label>
+      <input id="domain" maxlength="255" placeholder="https://example.com">
+      <button type="submit">Add Brand</button>
+      <p id="brand-message" role="status"></p>
+    </form>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Brand</th><th>Official Domain</th><th>Added</th><th>Action</th></tr>
+        </thead>
+        <tbody id="brand-list">
+          <tr><td colspan="4">Loading brands...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>BrandShield AI · Monitoring setup</footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    const form = document.getElementById("brand-form");
+    const message = document.getElementById("brand-message");
+    const list = document.getElementById("brand-list");
+
+    async function loadBrands() {
+      try {
+        const data = await api.brands();
+        list.replaceChildren();
+
+        if (!data.items.length) {
+          const row = list.insertRow();
+          const cell = row.insertCell();
+          cell.colSpan = 4;
+          cell.textContent = "No brands added yet.";
+          return;
+        }
+
+        data.items.forEach((brand) => {
+          const row = list.insertRow();
+          [brand.name, brand.domain || "—",
+           new Date(brand.created_at).toLocaleDateString()]
+            .forEach((value) => {
+              row.insertCell().textContent = value;
+            });
+
+          const action = row.insertCell();
+          const button = document.createElement("button");
+          button.textContent = "Remove";
+          button.addEventListener("click", async () => {
+            if (!confirm(`Remove ${brand.name}?`)) return;
+            try {
+              await api.deleteBrand(brand.id);
+              await loadBrands();
+            } catch (error) {
+              message.textContent = error.message;
+            }
+          });
+          action.appendChild(button);
+        });
+      } catch (error) {
+        list.textContent = error.message;
+      }
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      message.textContent = "Saving...";
+
+      try {
+        await api.addBrand(
+          document.getElementById("brand").value.trim(),
+          document.getElementById("domain").value.trim()
+        );
+        form.reset();
+        message.textContent = "Brand saved.";
+        await loadBrands();
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    });
+
+    loadBrands();
+  </script>
+</body>
+</html>

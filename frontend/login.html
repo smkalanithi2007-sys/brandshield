@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign In | BrandShield AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
+    <h1>Welcome back</h1>
+    <p class="muted">Sign-in is a planned feature, not enabled in this prototype.</p>
+
+    <form id="login-form">
+      <label for="email">Email address</label>
+      <input id="email" type="email" required autocomplete="email">
+      <label for="password">Password</label>
+      <input id="password" type="password" required autocomplete="current-password">
+      <button type="submit">Sign In</button>
+    </form>
+
+    <p id="message" role="status"></p>
+    <p class="muted">Need an account? <a class="accent" href="register.html">Register</a></p>
+    <a class="accent" href="index.html">← Back to home</a>
+  </main>
+
+  <script>
+    document.getElementById("login-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      document.getElementById("message").textContent =
+        "Authentication is not implemented. Do not enter real credentials.";
+    });
+  </script>
+</body>
+</html>

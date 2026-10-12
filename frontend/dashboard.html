@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | BrandShield AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body id="dashboard-page">
+  <header class="navbar">
+    <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
+    <nav class="nav-links">
+      <a class="active" href="dashboard.html">Dashboard</a>
+      <a href="monitoring.html">Monitoring</a>
+      <a href="threats.html">Threats</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </header>
+
+  <main class="section container">
+    <div class="section-heading">
+      <p class="eyebrow">OVERVIEW</p>
+      <h1>Security Dashboard</h1>
+      <p class="muted">Summary of stored demo data.</p>
+    </div>
+
+    <div class="notice">
+      Demo mode: these records are not live threat detections.
+    </div>
+
+    <div class="grid">
+      <article class="card">
+        <p class="stat-label">Monitored Brands</p>
+        <div class="stat-value" id="total-brands">—</div>
+      </article>
+      <article class="card">
+        <p class="stat-label">Recorded Findings</p>
+        <div class="stat-value" id="total-threats">—</div>
+      </article>
+      <article class="card">
+        <p class="stat-label">Unresolved Findings</p>
+        <div class="stat-value" id="open-threats">—</div>
+      </article>
+    </div>
+
+    <section class="section">
+      <div class="section-heading">
+        <h2>Recent findings</h2>
+        <a class="button" href="threats.html">View Threat Center</a>
+      </div>
+      <div class="card" id="recent-threats">Loading...</div>
+    </section>
+
+    <a class="button" href="monitoring.html">+ Add a brand</a>
+  </main>
+
+  <footer>BrandShield AI · Demo dashboard</footer>
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

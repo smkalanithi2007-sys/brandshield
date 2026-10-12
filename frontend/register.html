@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Register | BrandShield AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
+    <h1>Create an account</h1>
+    <p class="muted">Registration will be connected to the backend in a later stage.</p>
+
+    <form id="register-form">
+      <label for="name">Full name</label>
+      <input id="name" required maxlength="100" autocomplete="name">
+      <label for="email">Email address</label>
+      <input id="email" type="email" required autocomplete="email">
+      <label for="password">Password</label>
+      <input id="password" type="password" minlength="12" required autocomplete="new-password">
+      <button type="submit">Create Account</button>
+    </form>
+
+    <p id="message" role="status"></p>
+    <p class="muted">Already registered? <a class="accent" href="login.html">Sign in</a></p>
+    <a class="accent" href="index.html">← Back to home</a>
+  </main>
+
+  <script>
+    document.getElementById("register-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      document.getElementById("message").textContent =
+        "Account creation is not implemented. No account was created.";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Threat Center | BrandShield AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
+    <nav class="nav-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="monitoring.html">Monitoring</a>
+      <a class="active" href="threats.html">Threats</a>
+      <a href="reports.html">Reports</a>
+    </nav>
+  </header>
+
+  <main class="section container">
+    <div class="section-heading">
+      <p class="eyebrow">INVESTIGATION WORKSPACE</p>
+      <h1>Threat Center</h1>
+      <p class="muted">Manage simulated findings. No actual threats are detected by this demo.</p>
+    </div>
+
+    <button id="add-demo">+ Create Demo Finding</button>
+    <p id="message" role="status"></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Brand</th><th>Finding</th><th>Severity</th>
+            <th>Status</th><th>Update Status</th>
+          </tr>
+        </thead>
+        <tbody id="threat-list">
+          <tr><td colspan="5">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>BrandShield AI · Threat center</footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    const list = document.getElementById("threat-list");
+    const message = document.getElementById("message");
+
+    async function loadThreats() {
+      try {
+        const data = await api.threats();
+        list.replaceChildren();
+
+        if (!data.items.length) {
+          const row = list.insertRow();
+          const cell = row.insertCell();
+          cell.colSpan = 5;
+          cell.textContent = "No findings. Create a demo finding to test.";
+          return;
+        }
+
+        data.items.forEach((threat) => {
+          const row = list.insertRow();
+          [
+            threat.brand_name,
+            threat.type,
+            threat.severity,
+            threat.status
+          ].forEach((value) => {
+            row.insertCell().textContent = value;
+          });
+
+          const action = row.insertCell();
+          const select = document.createElement("select");
+
+          ["Open", "Investigating", "Resolved"].forEach((status) => {
+            const option = document.createElement("option");
+            option.value = status;
+            option.textContent = status;
+            select.appendChild(option);
+          });
+
+          select.value = threat.status;
+          select.addEventListener("change", async () => {
+            try {
+              await api.updateThreat(threat.id, select.value);
+              message.textContent = "Status updated.";
+              await loadThreats();
+            } catch (error) {
+              message.textContent = error.message;
+            }
+          });
+
+          action.appendChild(select);
+        });
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    }
+
+    document.getElementById("add-demo").addEventListener("click", async () => {
+      try {
+        await api.createDemoThreat();
+        message.textContent = "Simulated finding created.";
+        await loadThreats();
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    });
+
+    loadThreats();
+  </script>
+</body>
+</html>

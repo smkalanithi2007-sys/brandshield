@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reports | BrandShield AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
+    <nav class="nav-links">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="monitoring.html">Monitoring</a>
+      <a href="threats.html">Threats</a>
+      <a class="active" href="reports.html">Reports</a>
+    </nav>
+  </header>
+
+  <main class="section container">
+    <div class="section-heading">
+      <p class="eyebrow">REPORTING</p>
+      <h1>Security Reports</h1>
+      <p class="muted">Summaries of records saved in your local demo database.</p>
+    </div>
+
+    <div class="notice" id="disclaimer">Loading report...</div>
+    <div class="grid">
+      <article class="card">
+        <p class="stat-label">Monitored Brands</p>
+        <div class="stat-value" id="brands">—</div>
+      </article>
+      <article class="card">
+        <p class="stat-label">Total Findings</p>
+        <div class="stat-value" id="findings">—</div>
+      </article>
+      <article class="card">
+        <p class="stat-label">Unresolved</p>
+        <div class="stat-value" id="unresolved">—</div>
+      </article>
+    </div>
+
+    <section class="section">
+      <button id="download">Download JSON Report</button>
+    </section>
+  </main>
+
+  <footer>BrandShield AI · Demo reports</footer>
+  <script src="js/api.js"></script>
+  <script>
+    let reportData = null;
+
+    async function loadReport() {
+      const disclaimer = document.getElementById("disclaimer");
+
+      try {
+        reportData = await api.reports();
+        document.getElementById("brands").textContent =
+          reportData.total_brands;
+        document.getElementById("findings").textContent =
+          reportData.total_findings;
+        document.getElementById("unresolved").textContent =
+          reportData.unresolved_findings;
+        disclaimer.textContent = reportData.disclaimer;
+      } catch (error) {
+        disclaimer.textContent = error.message;
+      }
+    }
+
+    document.getElementById("download").addEventListener("click", () => {
+      if (!reportData) return;
+
+      const blob = new Blob(
+        [JSON.stringify(reportData, null, 2)],
+        { type: "application/json" }
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "brandshield-report.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    loadReport();
+  </script>
+</body>
+</html>
