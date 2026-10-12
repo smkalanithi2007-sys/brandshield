@@ -27,6 +27,11 @@ Provider coverage can be incomplete or delayed. An empty result is not a
 clean/safe verdict. Verify evidence with the source and investigate findings
 manually before taking action.
 
+The homepage supports one-time scans without an account. These scans require
+consent to share the submitted brand name and optional domain with the listed
+providers, are limited to five requests per hour per IP address, and are not
+saved to scan history. Sign in to save scans and manage monitored brands.
+
 ## Run locally
 
 Requirements: Python 3.12+ and a modern browser.
