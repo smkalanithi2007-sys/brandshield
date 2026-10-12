@@ -37,11 +37,42 @@ if (analyzeForm) {
         "This one-time scan is not saved to an account or scan history.";
       output.appendChild(notSaved);
 
+      const googleSearches = document.createElement("section");
+      const googleHeading = document.createElement("h3");
+      googleHeading.textContent = "Search Google directly";
+      googleSearches.appendChild(googleHeading);
+
+      const googleLinks = [
+        {
+          label: `Google web results for "${brandName}"`,
+          query: brandName
+        },
+        {
+          label: `Google social-profile results for "${brandName}"`,
+          query: `"${brandName}" (site:instagram.com OR site:facebook.com OR site:tiktok.com OR site:x.com OR site:linkedin.com OR site:youtube.com OR site:threads.net OR site:twitch.tv OR site:snapchat.com OR site:pinterest.com OR site:reddit.com)`
+        }
+      ];
+      googleLinks.forEach(({ label, query }) => {
+        const link = document.createElement("a");
+        link.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = label;
+        googleSearches.appendChild(link);
+      });
+
+      const googleNote = document.createElement("p");
+      googleNote.className = "muted";
+      googleNote.textContent =
+        "Google receives the search query only when you open a link. Google controls which results are available; BrandShield cannot guarantee or reproduce every Google result.";
+      googleSearches.appendChild(googleNote);
+      output.appendChild(googleSearches);
+
       const providers = document.createElement("ul");
       scan.provider_results.forEach((provider) => {
         const item = document.createElement("li");
         item.textContent =
-          `${provider.provider} — ${provider.status}: ${provider.message}`;
+          `${provider.provider} â€” ${provider.status}: ${provider.message}`;
         providers.appendChild(item);
       });
       output.appendChild(providers);
@@ -59,7 +90,7 @@ if (analyzeForm) {
         title.textContent =
           `${finding.category}: ${finding.title} (${finding.severity})`;
         const detail = document.createElement("p");
-        detail.textContent = `${finding.source} — ${finding.details}`;
+        detail.textContent = `${finding.source} â€” ${finding.details}`;
         card.append(title, detail);
 
         if (finding.url) {
