@@ -21,7 +21,7 @@ if (analyzeForm) {
 
     try {
       const consent = document.getElementById("provider-consent").checked;
-      const scan = await api.scan(
+      const scan = await api.publicScan(
         brandName,
         domainInput.value.trim(),
         consent
@@ -29,8 +29,13 @@ if (analyzeForm) {
       output.replaceChildren();
 
       const heading = document.createElement("h3");
-      heading.textContent = `Scan ${scan.scan_status}: ${scan.brand_name}`;
+      heading.textContent =
+        `One-time scan ${scan.scan_status}: ${scan.brand_name}`;
       output.appendChild(heading);
+      const notSaved = document.createElement("p");
+      notSaved.textContent =
+        "This one-time scan is not saved to an account or scan history.";
+      output.appendChild(notSaved);
 
       const providers = document.createElement("ul");
       scan.provider_results.forEach((provider) => {
@@ -77,19 +82,13 @@ if (analyzeForm) {
     } catch (error) {
       output.replaceChildren();
       const message = document.createElement("p");
-      message.textContent = error.status === 401
-        ? "Sign in or create an account to run a scan."
+      message.textContent = error.status === 429
+        ? "The one-time scan limit has been reached for this network. Try again later."
         : error.message;
       output.appendChild(message);
-      if (error.status === 401) {
-        const link = document.createElement("a");
-        link.href = "login.html";
-        link.textContent = "Sign in or create an account";
-        output.appendChild(link);
-      }
     } finally {
       button.disabled = false;
-      button.textContent = "Run live scan";
+      button.textContent = "Scan without saving";
     }
   });
 }
