@@ -371,56 +371,48 @@ def _apple_search(
 
 
 def scan_brand(
-    brand_name: str, domain: str, search_types: set[str] | None = None
+    brand_name: str, domain: str
 ) -> tuple[list[dict], list[dict[str, Any]]]:
     findings: list[dict] = []
     results: list[ProviderResult] = []
     timeout = httpx.Timeout(10.0, connect=4.0)
-    selected = search_types if search_types is not None else {
-        "social_profiles",
-        "google_play",
-        "app_store",
-        "domain_security",
-    }
 
     with httpx.Client(timeout=timeout, follow_redirects=False) as client, \
             ThreadPoolExecutor(max_workers=5) as executor:
         checks = []
-        if "domain_security" in selected:
-            if domain:
-                url = f"https://{domain}/"
-                checks.extend((
-                    executor.submit(_check_webrisk, client, url),
-                    executor.submit(_check_virustotal, client, domain),
-                ))
-            else:
-                results.extend((
-                    ProviderResult(
-                        "Google Web Risk", "skipped",
-                        "Add an official domain to check URL reputation.",
-                    ),
-                    ProviderResult(
-                        "VirusTotal", "skipped",
-                        "Add an official domain to check domain reputation.",
-                    ),
-                ))
+        if domain:
+            url = f"https://{domain}/"
+            checks.extend((
+                executor.submit(_check_webrisk, client, url),
+                executor.submit(_check_virustotal, client, domain),
+            ))
+        else:
+            results.extend((
+                ProviderResult(
+                    "Google Web Risk", "skipped",
+                    "Add an official domain to check URL reputation.",
+                ),
+                ProviderResult(
+                    "VirusTotal", "skipped",
+                    "Add an official domain to check domain reputation.",
+                ),
+            ))
 
-        if "social_profiles" in selected:
-            social_query = (
-                f'"{brand_name}" (site:instagram.com OR site:facebook.com OR '
-                "site:tiktok.com OR site:x.com OR site:linkedin.com OR "
-                "site:youtube.com)"
-            )
-            checks.append(executor.submit(
+        social_query = (
+            f'"{brand_name}" (site:instagram.com OR site:facebook.com OR '
+            "site:tiktok.com OR site:x.com OR site:linkedin.com OR "
+            "site:youtube.com)"
+        )
+        play_query = f'"{brand_name}" site:play.google.com/store/apps'
+        checks.extend((
+            executor.submit(
                 _brave_search, client, social_query, "Social profile candidate"
-            ))
-        if "google_play" in selected:
-            play_query = f'"{brand_name}" site:play.google.com/store/apps'
-            checks.append(executor.submit(
+            ),
+            executor.submit(
                 _brave_search, client, play_query, "Google Play listing candidate"
-            ))
-        if "app_store" in selected:
-            checks.append(executor.submit(_apple_search, client, brand_name))
+            ),
+            executor.submit(_apple_search, client, brand_name),
+        ))
 
         for check in checks:
             provider_result, provider_findings = check.result()
