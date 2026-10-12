@@ -1,4 +1,5 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from typing import Any
 from urllib.parse import quote
@@ -351,14 +352,14 @@ def scan_brand(
     results: list[ProviderResult] = []
     timeout = httpx.Timeout(10.0, connect=4.0)
 
-    with httpx.Client(timeout=timeout, follow_redirects=False) as client:
+    with httpx.Client(timeout=timeout, follow_redirects=False) as client,             ThreadPoolExecutor(max_workers=5) as executor:
+        checks = []
         if domain:
             url = f"https://{domain}/"
-            web_result, web_findings = _check_webrisk(client, url)
-            vt_result, vt_findings = _check_virustotal(client, domain)
-            results.extend((web_result, vt_result))
-            findings.extend(web_findings)
-            findings.extend(vt_findings)
+            checks.extend((
+                executor.submit(_check_webrisk, client, url),
+                executor.submit(_check_virustotal, client, domain),
+            ))
         else:
             results.extend((
                 ProviderResult(
@@ -376,19 +377,19 @@ def scan_brand(
             "site:tiktok.com OR site:x.com OR site:linkedin.com OR "
             "site:youtube.com)"
         )
-        play_query = (
-            f'"{brand_name}" site:play.google.com/store/apps'
-        )
-        social_result, social_findings = _brave_search(
-            client, social_query, "Social profile candidate"
-        )
-        play_result, play_findings = _brave_search(
-            client, play_query, "Google Play listing candidate"
-        )
-        apple_result, apple_findings = _apple_search(client, brand_name)
-        results.extend((social_result, play_result, apple_result))
-        findings.extend(social_findings)
-        findings.extend(play_findings)
-        findings.extend(apple_findings)
+        play_query = f'"{brand_name}" site:play.google.com/store/apps'
+        checks.extend((
+            executor.submit(
+                _brave_search, client, social_query, "Social profile candidate"
+            ),
+            executor.submit(
+                _brave_search, client, play_query, "Google Play listing candidate"
+            ),
+            executor.submit(_apple_search, client, brand_name),
+        ))
+        for check in checks:
+            provider_result, provider_findings = check.result()
+            results.append(provider_result)
+            findings.extend(provider_findings)
 
     return findings, [item.as_dict() for item in results]
