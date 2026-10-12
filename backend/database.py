@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker
 
@@ -32,6 +32,14 @@ engine = create_engine(
     else {},
     pool_pre_ping=True,
 )
+if engine.dialect.name == "sqlite":
+    @event.listens_for(engine, "connect")
+    def enable_sqlite_foreign_keys(connection, _record) -> None:
+        cursor = connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
+
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
