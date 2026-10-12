@@ -15,8 +15,7 @@ account has private monitored brands, scan history, and findings.
   Google Play listings. Brand names are sent as search queries. Results are
   unverified leads, not evidence that an account or app is fake. Brave Search
   is usage-priced; review the current plan and add spending controls.
-- **Apple App Store Search:** searches Apple's public software catalog. Apple
-  receives the brand-name query.
+- **Apple App Store Search:** searches Apple's public software catalog. Apple receives the brand-name query. Results are retained only when the brand name appears in the listing title or publisher; the publisher is shown for manual comparison. These are unverified catalog matches, not proof of impersonation.
 
 Google Play does not provide a public third-party app-catalog search API in its
 official Developer API. BrandShield uses Brave search results for Google Play
