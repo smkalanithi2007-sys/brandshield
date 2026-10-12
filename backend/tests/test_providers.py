@@ -52,3 +52,37 @@ def test_provider_lookups_run_concurrently(monkeypatch) -> None:
         "Apple App Store Search",
     ]
     assert all(item["status"] == "checked" for item in results)
+
+def test_apple_search_filters_unrelated_catalog_results_and_shows_publisher(monkeypatch) -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict:
+            return {
+                "results": [
+                    {
+                        "trackName": "Adobe Acrobat Reader",
+                        "artistName": "Adobe Inc.",
+                        "trackViewUrl": "https://apps.apple.com/app/adobe-reader",
+                    },
+                    {
+                        "trackName": "Beaners Fun Cuts",
+                        "artistName": "Appsme Ltd",
+                        "trackViewUrl": "https://apps.apple.com/app/beaners-fun-cuts",
+                    },
+                ]
+            }
+
+    monkeypatch.setattr(
+        providers.httpx.Client,
+        "get",
+        lambda *_args, **_kwargs: FakeResponse(),
+    )
+
+    result, findings = providers._apple_search(providers.httpx.Client(), "Adobe")
+
+    assert result.status == "checked"
+    assert result.matches == 1
+    assert [finding["title"] for finding in findings] == ["Adobe Acrobat Reader"]
+    assert "Adobe Inc." in findings[0]["details"]
