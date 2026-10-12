@@ -7,8 +7,7 @@ account has private monitored brands, scan history, and findings.
 ## What a scan checks
 
 - **Google Web Risk:** looks up the HTTPS homepage of an optional official
-  domain in Google's threat lists. The non-commercial Safe Browsing API is not
-  
+   domain in Google's threat lists. The non-commercial Safe Browsing API is not 
 - **VirusTotal:** reads an existing domain report; it does not submit URLs for
   scanning. VirusTotal receives the domain lookup.
 - **Brave Search:** searches public results for social-profile candidates and
@@ -105,8 +104,8 @@ budget alerts. Hosting and provider usage are separate costs.
 
 Before each on-demand scan or when adding a monitored brand, the user must
 consent to external lookups. The app sends the brand name to Brave and Apple;
-when a domain is supplied, Google receives its HTTPS homepage URL and
-used. Web Risk receives the checked URL. Each scan also links directly to Google live web and social-profile searches for the submitted name; Google determines its results, so BrandShield cannot guarantee every indexed page. No URLs are submitted to
+when a domain is supplied, Google Web Risk receives its HTTPS homepage URL and
+VirusTotal receives a domain-report request. Google Search receives the submitted name only if the user follows a Google Search link. Google determines which results are shown; BrandShield cannot guarantee every indexed result. No URLs are submitted to
 VirusTotal for scanning. Scheduled scans repeat the consented lookups.
 
 Passwords are Argon2-hashed, and sessions use signed HttpOnly cookies. The
