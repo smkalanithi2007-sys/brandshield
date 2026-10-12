@@ -7,7 +7,7 @@ account has private monitored brands, scan history, and findings.
 ## What a scan checks
 
 - **Google Web Risk:** looks up the HTTPS homepage of an optional official
-   domain in Google's threat lists. The non-commercial Safe Browsing API is not 
+  domain in Google's threat lists. The non-commercial Safe Browsing API is not used. Web Risk receives the checked URL.
 - **VirusTotal:** reads an existing domain report; it does not submit URLs for
   scanning. VirusTotal receives the domain lookup.
 - **Brave Search:** searches public results for social-profile candidates and
