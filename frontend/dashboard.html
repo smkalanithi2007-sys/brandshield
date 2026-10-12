@@ -7,7 +7,7 @@
   <title>Dashboard | BrandShield AI</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body id="dashboard-page">
+<body id="dashboard-page" data-auth-required="true">
   <header class="navbar">
     <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
     <nav class="nav-links">
@@ -16,6 +16,8 @@
       <a href="threats.html">Threats</a>
       <a href="reports.html">Reports</a>
       <a href="settings.html">Settings</a>
+      <span id="user-email"></span>
+      <button id="sign-out" type="button">Sign out</button>
     </nav>
   </header>
 
@@ -23,12 +25,10 @@
     <div class="section-heading">
       <p class="eyebrow">OVERVIEW</p>
       <h1>Security Dashboard</h1>
-      <p class="muted">Summary of stored demo data.</p>
+      <p class="muted">Summary of your saved scans and findings.</p>
     </div>
 
-    <div class="notice">
-      Demo mode: these records are not live threat detections.
-    </div>
+    <p id="auth-message" class="notice" role="status"></p>
 
     <div class="grid">
       <article class="card">
@@ -36,19 +36,19 @@
         <div class="stat-value" id="total-brands">—</div>
       </article>
       <article class="card">
-        <p class="stat-label">Recorded Findings</p>
+        <p class="stat-label">Saved Findings</p>
         <div class="stat-value" id="total-threats">—</div>
       </article>
       <article class="card">
-        <p class="stat-label">Unresolved Findings</p>
+        <p class="stat-label">Needs Review</p>
         <div class="stat-value" id="open-threats">—</div>
       </article>
     </div>
 
     <section class="section">
       <div class="section-heading">
-        <h2>Recent findings</h2>
-        <a class="button" href="threats.html">View Threat Center</a>
+        <h2>Recent scan leads</h2>
+        <a class="button" href="threats.html">Review findings</a>
       </div>
       <div class="card" id="recent-threats">Loading...</div>
     </section>
@@ -56,8 +56,9 @@
     <a class="button" href="monitoring.html">+ Add a brand</a>
   </main>
 
-  <footer>BrandShield AI · Demo dashboard</footer>
+  <footer>BrandShield AI · Your monitoring workspace</footer>
   <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,62 +6,78 @@
   <title>Reports | BrandShield AI</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-auth-required="true">
   <header class="navbar">
     <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
     <nav class="nav-links">
       <a href="dashboard.html">Dashboard</a>
       <a href="monitoring.html">Monitoring</a>
-      <a href="threats.html">Threats</a>
+      <a href="threats.html">Findings</a>
       <a class="active" href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+      <span id="user-email"></span>
+      <button id="sign-out" type="button">Sign out</button>
     </nav>
   </header>
 
   <main class="section container">
     <div class="section-heading">
       <p class="eyebrow">REPORTING</p>
-      <h1>Security Reports</h1>
-      <p class="muted">Summaries of records saved in your local demo database.</p>
+      <h1>Scan Reports</h1>
+      <p class="muted">Summaries of scans and findings saved to your account.</p>
     </div>
 
-    <div class="notice" id="disclaimer">Loading report...</div>
+    <p class="notice" id="disclaimer">Loading report...</p>
+    <p id="auth-message" role="status"></p>
     <div class="grid">
       <article class="card">
         <p class="stat-label">Monitored Brands</p>
         <div class="stat-value" id="brands">—</div>
       </article>
       <article class="card">
-        <p class="stat-label">Total Findings</p>
-        <div class="stat-value" id="findings">—</div>
+        <p class="stat-label">Total Scans</p>
+        <div class="stat-value" id="scans">—</div>
       </article>
       <article class="card">
-        <p class="stat-label">Unresolved</p>
-        <div class="stat-value" id="unresolved">—</div>
+        <p class="stat-label">Saved Findings</p>
+        <div class="stat-value" id="findings">—</div>
       </article>
     </div>
 
     <section class="section">
-      <button id="download">Download JSON Report</button>
+      <h2>Provider availability</h2>
+      <div class="card" id="source-list">Loading providers...</div>
+      <button id="download" type="button">Download JSON Report</button>
     </section>
   </main>
 
-  <footer>BrandShield AI · Demo reports</footer>
+  <footer>BrandShield AI · Search results are leads, not verified detections.</footer>
   <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
   <script>
     let reportData = null;
 
     async function loadReport() {
       const disclaimer = document.getElementById("disclaimer");
+      const sourceList = document.getElementById("source-list");
 
       try {
         reportData = await api.reports();
         document.getElementById("brands").textContent =
           reportData.total_brands;
+        document.getElementById("scans").textContent =
+          reportData.total_scans;
         document.getElementById("findings").textContent =
           reportData.total_findings;
-        document.getElementById("unresolved").textContent =
-          reportData.unresolved_findings;
         disclaimer.textContent = reportData.disclaimer;
+
+        sourceList.replaceChildren();
+        reportData.sources.forEach((source) => {
+          const item = document.createElement("p");
+          item.textContent =
+            `${source.provider} — ${source.status}: ${source.coverage}`;
+          sourceList.appendChild(item);
+        });
       } catch (error) {
         disclaimer.textContent = error.message;
       }

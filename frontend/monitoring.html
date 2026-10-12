@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,48 +6,72 @@
   <title>Monitoring | BrandShield AI</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-auth-required="true">
   <header class="navbar">
     <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
     <nav class="nav-links">
       <a href="dashboard.html">Dashboard</a>
       <a class="active" href="monitoring.html">Monitoring</a>
-      <a href="threats.html">Threats</a>
+      <a href="threats.html">Findings</a>
       <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+      <span id="user-email"></span>
+      <button id="sign-out" type="button">Sign out</button>
     </nav>
   </header>
 
   <main class="section container">
     <div class="section-heading">
-      <p class="eyebrow">BRAND MANAGEMENT</p>
+      <p class="eyebrow">BRAND MONITORING</p>
       <h1>Monitored Brands</h1>
-      <p class="muted">Save brands and official domain references for your demo workspace.</p>
+      <p class="muted">Run on-demand scans or enable a daily-to-weekly recheck.</p>
     </div>
+
+    <p id="auth-message" class="notice" role="status"></p>
 
     <form id="brand-form" class="form-card">
       <label for="brand">Brand name</label>
       <input id="brand" maxlength="100" required placeholder="Example Brand">
       <label for="domain">Official domain (optional)</label>
       <input id="domain" maxlength="255" placeholder="https://example.com">
-      <button type="submit">Add Brand</button>
+      <label for="interval">Automatic recheck</label>
+      <select id="interval">
+        <option value="">Off</option>
+        <option value="24">Every 24 hours</option>
+        <option value="48">Every 48 hours</option>
+        <option value="72">Every 72 hours</option>
+        <option value="168">Every 7 days</option>
+      </select>
+      <label>
+        <input id="provider-consent" type="checkbox" required>
+        I agree that the brand name and domain may be sent to external
+        providers (Google Web Risk, VirusTotal report lookup, Brave Search,
+        and Apple Search). Scheduled checks repeat these lookups; search
+        results and app listings are unverified leads.
+      </label>
+      <button type="submit">Add monitored brand</button>
       <p id="brand-message" role="status"></p>
     </form>
 
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Brand</th><th>Official Domain</th><th>Added</th><th>Action</th></tr>
+          <tr>
+            <th>Brand</th><th>Official Domain</th><th>Recheck</th>
+            <th>Next Scan</th><th>Actions</th>
+          </tr>
         </thead>
         <tbody id="brand-list">
-          <tr><td colspan="4">Loading brands...</td></tr>
+          <tr><td colspan="5">Loading brands...</td></tr>
         </tbody>
       </table>
     </div>
   </main>
 
-  <footer>BrandShield AI · Monitoring setup</footer>
+  <footer>BrandShield AI · External provider lookups can incur charges.</footer>
 
   <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
   <script>
     const form = document.getElementById("brand-form");
     const message = document.getElementById("brand-message");
@@ -62,32 +85,82 @@
         if (!data.items.length) {
           const row = list.insertRow();
           const cell = row.insertCell();
-          cell.colSpan = 4;
+          cell.colSpan = 5;
           cell.textContent = "No brands added yet.";
           return;
         }
 
         data.items.forEach((brand) => {
           const row = list.insertRow();
-          [brand.name, brand.domain || "—",
-           new Date(brand.created_at).toLocaleDateString()]
-            .forEach((value) => {
-              row.insertCell().textContent = value;
-            });
+          row.insertCell().textContent = brand.name;
+          row.insertCell().textContent = brand.domain || "—";
 
-          const action = row.insertCell();
-          const button = document.createElement("button");
-          button.textContent = "Remove";
-          button.addEventListener("click", async () => {
-            if (!confirm(`Remove ${brand.name}?`)) return;
+          const scheduleCell = row.insertCell();
+          const schedule = document.createElement("select");
+          [
+            ["", "Off"],
+            ["24", "24 hours"],
+            ["48", "48 hours"],
+            ["72", "72 hours"],
+            ["168", "7 days"]
+          ].forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            schedule.appendChild(option);
+          });
+          schedule.value = brand.monitoring_interval_hours?.toString() || "";
+          schedule.addEventListener("change", async () => {
+            try {
+              const interval = schedule.value ? Number(schedule.value) : null;
+              await api.scheduleBrand(brand.id, interval);
+              message.textContent = interval
+                ? `Automatic rechecks enabled every ${interval} hours.`
+                : "Automatic rechecks paused.";
+              await loadBrands();
+            } catch (error) {
+              message.textContent = error.message;
+              await loadBrands();
+            }
+          });
+          scheduleCell.appendChild(schedule);
+
+          row.insertCell().textContent = brand.next_scan_at
+            ? new Date(brand.next_scan_at).toLocaleString()
+            : "—";
+
+          const actions = row.insertCell();
+          const scanButton = document.createElement("button");
+          scanButton.type = "button";
+          scanButton.textContent = "Scan now";
+          scanButton.addEventListener("click", async () => {
+            scanButton.disabled = true;
+            message.textContent = `Scanning ${brand.name}...`;
+            try {
+              const result = await api.scanBrand(brand.id);
+              message.textContent =
+                `Scan ${result.scan_status}; saved ${result.findings.length} finding(s).`;
+            } catch (error) {
+              message.textContent = error.message;
+            } finally {
+              scanButton.disabled = false;
+            }
+          });
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.textContent = "Remove";
+          removeButton.addEventListener("click", async () => {
+            if (!confirm(`Remove ${brand.name} from monitoring?`)) return;
             try {
               await api.deleteBrand(brand.id);
+              message.textContent = "Brand removed from monitoring.";
               await loadBrands();
             } catch (error) {
               message.textContent = error.message;
             }
           });
-          action.appendChild(button);
+          actions.append(scanButton, removeButton);
         });
       } catch (error) {
         list.textContent = error.message;
@@ -99,9 +172,12 @@
       message.textContent = "Saving...";
 
       try {
+        const intervalValue = document.getElementById("interval").value;
         await api.addBrand(
           document.getElementById("brand").value.trim(),
-          document.getElementById("domain").value.trim()
+          document.getElementById("domain").value.trim(),
+          intervalValue ? Number(intervalValue) : null,
+          document.getElementById("provider-consent").checked
         );
         form.reset();
         message.textContent = "Brand saved.";

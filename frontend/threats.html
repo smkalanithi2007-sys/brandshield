@@ -1,118 +1,121 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Threat Center | BrandShield AI</title>
+  <title>Findings | BrandShield AI</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-auth-required="true">
   <header class="navbar">
     <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
     <nav class="nav-links">
       <a href="dashboard.html">Dashboard</a>
       <a href="monitoring.html">Monitoring</a>
-      <a class="active" href="threats.html">Threats</a>
+      <a class="active" href="threats.html">Findings</a>
       <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+      <span id="user-email"></span>
+      <button id="sign-out" type="button">Sign out</button>
     </nav>
   </header>
 
   <main class="section container">
     <div class="section-heading">
       <p class="eyebrow">INVESTIGATION WORKSPACE</p>
-      <h1>Threat Center</h1>
-      <p class="muted">Manage simulated findings. No actual threats are detected by this demo.</p>
+      <h1>Scan Findings</h1>
+      <p class="muted">Threat-feed matches and unverified search-result leads from your saved scans.</p>
     </div>
 
-    <button id="add-demo">+ Create Demo Finding</button>
+    <p class="notice">
+      A search or app-store name match is not proof of impersonation or fraud.
+      Review the provider evidence and verify ownership before taking action.
+    </p>
+    <p id="auth-message" role="status"></p>
     <p id="message" role="status"></p>
 
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Brand</th><th>Finding</th><th>Severity</th>
-            <th>Status</th><th>Update Status</th>
+            <th>Source</th><th>Finding</th><th>Severity</th>
+            <th>Status</th><th>Evidence</th><th>Update Status</th>
           </tr>
         </thead>
-        <tbody id="threat-list">
-          <tr><td colspan="5">Loading...</td></tr>
+        <tbody id="finding-list">
+          <tr><td colspan="6">Loading findings...</td></tr>
         </tbody>
       </table>
     </div>
   </main>
 
-  <footer>BrandShield AI · Threat center</footer>
+  <footer>BrandShield AI · Confirm findings with their source before acting.</footer>
 
   <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
   <script>
-    const list = document.getElementById("threat-list");
+    const list = document.getElementById("finding-list");
     const message = document.getElementById("message");
 
-    async function loadThreats() {
+    async function loadFindings() {
       try {
-        const data = await api.threats();
+        const data = await api.findings();
         list.replaceChildren();
 
         if (!data.items.length) {
           const row = list.insertRow();
           const cell = row.insertCell();
-          cell.colSpan = 5;
-          cell.textContent = "No findings. Create a demo finding to test.";
+          cell.colSpan = 6;
+          cell.textContent = "No findings yet. Add a brand and run a scan.";
           return;
         }
 
-        data.items.forEach((threat) => {
+        data.items.forEach((finding) => {
           const row = list.insertRow();
-          [
-            threat.brand_name,
-            threat.type,
-            threat.severity,
-            threat.status
-          ].forEach((value) => {
-            row.insertCell().textContent = value;
-          });
+          row.insertCell().textContent = finding.source;
+          row.insertCell().textContent =
+            `${finding.category}: ${finding.title} — ${finding.details}`;
+          row.insertCell().textContent = finding.severity;
+          row.insertCell().textContent = finding.status;
+
+          const evidence = row.insertCell();
+          if (finding.url) {
+            const link = document.createElement("a");
+            link.href = finding.url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Open source";
+            evidence.appendChild(link);
+          } else {
+            evidence.textContent = "—";
+          }
 
           const action = row.insertCell();
           const select = document.createElement("select");
-
-          ["Open", "Investigating", "Resolved"].forEach((status) => {
+          ["Needs review", "Investigating", "Resolved"].forEach((status) => {
             const option = document.createElement("option");
             option.value = status;
             option.textContent = status;
             select.appendChild(option);
           });
-
-          select.value = threat.status;
+          select.value = finding.status;
           select.addEventListener("change", async () => {
             try {
-              await api.updateThreat(threat.id, select.value);
-              message.textContent = "Status updated.";
-              await loadThreats();
+              await api.updateFinding(finding.id, select.value);
+              message.textContent = "Finding status updated.";
+              await loadFindings();
             } catch (error) {
               message.textContent = error.message;
             }
           });
-
           action.appendChild(select);
         });
       } catch (error) {
-        message.textContent = error.message;
+        list.textContent = error.message;
       }
     }
 
-    document.getElementById("add-demo").addEventListener("click", async () => {
-      try {
-        await api.createDemoThreat();
-        message.textContent = "Simulated finding created.";
-        await loadThreats();
-      } catch (error) {
-        message.textContent = error.message;
-      }
-    });
-
-    loadThreats();
+    loadFindings();
   </script>
 </body>
 </html>

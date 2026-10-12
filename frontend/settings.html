@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,38 +6,83 @@
   <title>Settings | BrandShield AI</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-auth-required="true">
   <header class="navbar">
     <a class="logo" href="index.html">🛡 BrandShield<span> AI</span></a>
     <nav class="nav-links">
       <a href="dashboard.html">Dashboard</a>
       <a href="monitoring.html">Monitoring</a>
-      <a href="threats.html">Threats</a>
+      <a href="threats.html">Findings</a>
       <a href="reports.html">Reports</a>
       <a class="active" href="settings.html">Settings</a>
+      <span id="user-email"></span>
+      <button id="sign-out" type="button">Sign out</button>
     </nav>
   </header>
 
   <main class="section container">
     <div class="section-heading">
-      <p class="eyebrow">PREFERENCES</p>
+      <p class="eyebrow">ACCOUNT AND SOURCES</p>
       <h1>Settings</h1>
     </div>
+    <p id="auth-message" class="notice" role="status"></p>
 
     <section class="card">
-      <h2>Application status</h2>
-      <p class="muted">BrandShield AI is running in local demo mode.</p>
-      <p>Authentication: Not implemented</p>
-      <p>Threat detection: Simulated data only</p>
-      <p>Database: Local SQLite</p>
+      <h2>Provider status</h2>
+      <p class="muted">A configured key does not guarantee quota, billing, or provider availability.</p>
+      <div id="source-list">Loading provider status...</div>
     </section>
 
     <section class="card" style="margin-top:20px">
-      <h2>Data and security</h2>
-      <p class="muted">Do not store real customer information in this prototype. Before deployment, add authentication, access controls, backups, and a data-retention policy.</p>
+      <h2>Data sharing and scan limits</h2>
+      <p>
+        BrandShield sends approved brand names to Brave Search and Apple Search.
+        When an official domain is supplied, it sends the HTTPS homepage URL to
+        Google Web Risk and requests the existing domain report from VirusTotal.
+        BrandShield does not submit URLs to VirusTotal for scanning.
+      </p>
+      <p>
+        Search and catalog results are leads only. A match does not establish
+        that an account, domain, or app is fake or unsafe. Review evidence from
+        the source before taking action.
+      </p>
+      <p>
+        Automatic scans are opt-in and can incur provider charges. Manage each
+        brand's schedule on the <a class="accent" href="monitoring.html">Monitoring page</a>.
+      </p>
+    </section>
+
+    <section class="card" style="margin-top:20px">
+      <h2>Account security</h2>
+      <p>
+        Passwords are hashed and sessions use HttpOnly cookies. Email
+        verification, password reset, multi-factor authentication, and account
+        deletion are not yet available; do not use a password you use elsewhere.
+      </p>
     </section>
   </main>
 
-  <footer>BrandShield AI · Settings</footer>
+  <footer>BrandShield AI · Provider settings are managed by the service operator.</footer>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    async function loadSources() {
+      const sourceList = document.getElementById("source-list");
+      try {
+        const data = await api.sources();
+        sourceList.replaceChildren();
+        data.items.forEach((source) => {
+          const item = document.createElement("p");
+          item.textContent =
+            `${source.provider} — ${source.status}: ${source.coverage}`;
+          sourceList.appendChild(item);
+        });
+      } catch (error) {
+        sourceList.textContent = error.message;
+      }
+    }
+
+    loadSources();
+  </script>
 </body>
 </html>
