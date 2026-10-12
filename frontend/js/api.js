@@ -1,57 +1,90 @@
-
-const API_BASE = "http://127.0.0.1:8000";
-
 async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(path, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...options.headers
     }
   });
 
-  const data = await response.json();
+  const contentType = response.headers.get("content-type") || "";
+  const data = contentType.includes("application/json")
+    ? await response.json()
+    : null;
 
   if (!response.ok) {
-    const message = typeof data.detail === "string"
+    const detail = typeof data?.detail === "string"
       ? data.detail
-      : "Request failed. Check the backend.";
-    throw new Error(message);
+      : `Request failed (${response.status}).`;
+    const error = new Error(detail);
+    error.status = response.status;
+    throw error;
   }
 
   return data;
 }
 
 const api = {
-  analyze: (brand_name) =>
-    apiRequest("/analyze", {
+  register: (email, password) =>
+    apiRequest("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({ brand_name })
+      body: JSON.stringify({ email, password })
     }),
 
-  brands: () => apiRequest("/brands"),
-
-  addBrand: (name, domain) =>
-    apiRequest("/brands", {
+  login: (email, password) =>
+    apiRequest("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ name, domain })
+      body: JSON.stringify({ email, password })
+    }),
+
+  logout: () => apiRequest("/api/auth/logout", { method: "POST" }),
+  me: () => apiRequest("/api/auth/me"),
+
+  sources: () => apiRequest("/api/sources"),
+  brands: () => apiRequest("/api/brands"),
+
+  addBrand: (name, domain, monitoring_interval_hours, external_lookup_consent) =>
+    apiRequest("/api/brands", {
+      method: "POST",
+      body: JSON.stringify({
+        name,
+        domain,
+        monitoring_interval_hours,
+        external_lookup_consent
+      })
     }),
 
   deleteBrand: (id) =>
-    apiRequest(`/brands/${encodeURIComponent(id)}`, {
+    apiRequest(`/api/brands/${encodeURIComponent(id)}`, {
       method: "DELETE"
     }),
 
-  threats: () => apiRequest("/threats"),
+  scheduleBrand: (id, interval_hours, external_lookup_consent = false) =>
+    apiRequest(`/api/brands/${encodeURIComponent(id)}/schedule`, {
+      method: "PATCH",
+      body: JSON.stringify({ interval_hours, external_lookup_consent })
+    }),
 
-  createDemoThreat: () =>
-    apiRequest("/threats/demo", { method: "POST" }),
+  scanBrand: (id) =>
+    apiRequest(`/api/brands/${encodeURIComponent(id)}/scan`, {
+      method: "POST"
+    }),
 
-  updateThreat: (id, status) =>
-    apiRequest(`/threats/${encodeURIComponent(id)}`, {
+  scan: (brand_name, domain, external_lookup_consent) =>
+    apiRequest("/api/scans", {
+      method: "POST",
+      body: JSON.stringify({ brand_name, domain, external_lookup_consent })
+    }),
+
+  scans: () => apiRequest("/api/scans"),
+  findings: () => apiRequest("/api/findings"),
+
+  updateFinding: (id, status) =>
+    apiRequest(`/api/findings/${encodeURIComponent(id)}`, {
       method: "PATCH",
       body: JSON.stringify({ status })
     }),
 
-  reports: () => apiRequest("/reports")
+  reports: () => apiRequest("/api/reports")
 };

@@ -1,4 +1,3 @@
-
 async function loadDashboard() {
   const targets = document.getElementById("total-brands");
   const total = document.getElementById("total-threats");
@@ -6,27 +5,28 @@ async function loadDashboard() {
   const list = document.getElementById("recent-threats");
 
   try {
-    const [brandsData, threatsData, reportsData] = await Promise.all([
+    const [brandsData, report, findingsData] = await Promise.all([
       api.brands(),
-      api.threats(),
-      api.reports()
+      api.reports(),
+      api.findings()
     ]);
 
     if (targets) targets.textContent = brandsData.items.length;
-    if (total) total.textContent = reportsData.total_findings;
-    if (open) open.textContent = reportsData.unresolved_findings;
+    if (total) total.textContent = report.total_findings;
+    if (open) open.textContent = report.unresolved_findings;
 
     if (list) {
       list.replaceChildren();
-
-      if (threatsData.items.length === 0) {
-        list.textContent = "No saved demo findings yet.";
+      const recent = findingsData.items.slice(0, 5);
+      if (recent.length === 0) {
+        list.textContent = "No findings recorded yet. Add a brand and run a scan.";
       }
 
-      threatsData.items.slice(0, 5).forEach((threat) => {
+      recent.forEach((finding) => {
         const item = document.createElement("p");
         item.textContent =
-          `${threat.brand_name} — ${threat.type} (${threat.status})`;
+          `${finding.brand_id ? "Monitored brand" : finding.title} — ` +
+          `${finding.category} (${finding.severity}, ${finding.status})`;
         list.appendChild(item);
       });
     }
