@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local database
+brandshield.db
+*.sqlite3
+
+# Editors and operating systems
+.vscode/
+.DS_Store
+Thumbs.db
