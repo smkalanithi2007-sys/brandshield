@@ -120,6 +120,57 @@ def test_one_off_scans_require_external_lookup_consent(
     assert accepted.status_code == 200
 
 
+def test_public_one_off_scan_does_not_require_login_or_save_results(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        main,
+        "scan_brand",
+        lambda _name, _domain: (
+            [{
+                "source": "Test provider",
+                "category": "Test lead",
+                "severity": "Informational",
+                "title": "Unverified result",
+                "url": "https://example.net/result",
+                "details": "Test data only.",
+            }],
+            [{
+                "provider": "Test provider",
+                "status": "checked",
+                "message": "Test response.",
+                "matches": 1,
+            }],
+        ),
+    )
+
+    missing_consent = client.post(
+        "/api/public/scans",
+        json={"brand_name": "Example Brand", "domain": "example.com"},
+    )
+    assert missing_consent.status_code == 400
+
+    response = client.post(
+        "/api/public/scans",
+        json={
+            "brand_name": "Example Brand",
+            "domain": "https://example.com/about",
+            "external_lookup_consent": True,
+        },
+    )
+    assert response.status_code == 200, response.text
+    scan = response.json()
+    assert scan["id"] is None
+    assert scan["brand_name"] == "Example Brand"
+    assert scan["domain"] == "example.com"
+    assert scan["scan_status"] == "completed"
+    assert scan["findings"][0]["title"] == "Unverified result"
+
+    with SessionLocal() as db:
+        assert db.query(ScanRun).count() == 0
+        assert db.query(Finding).count() == 0
+
+
 def test_domains_are_normalized_and_private_targets_rejected() -> None:
     assert main.normalize_domain("https://Example.COM/path") == "example.com"
     with pytest.raises(main.HTTPException) as error:
