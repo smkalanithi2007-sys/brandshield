@@ -189,6 +189,21 @@ def finding_record(finding: Finding) -> dict:
     }
 
 
+def get_scan_status(provider_results: list[dict]) -> str:
+    provider_statuses = [item["status"] for item in provider_results]
+    active_statuses = [
+        status for status in provider_statuses
+        if status not in {"not_configured", "skipped"}
+    ]
+    if not active_statuses or all(status == "unavailable" for status in active_statuses):
+        return "unavailable"
+    if any(status == "unavailable" for status in active_statuses) or any(
+        status == "not_configured" for status in provider_statuses
+    ):
+        return "partial"
+    return "completed"
+
+
 def execute_scan(
     db: Session,
     user_id: int,
@@ -197,19 +212,7 @@ def execute_scan(
     brand_id: int | None = None,
 ) -> dict:
     findings, provider_results = scan_brand(brand_name, domain)
-    provider_statuses = [item["status"] for item in provider_results]
-    active_statuses = [
-        status for status in provider_statuses
-        if status not in {"not_configured", "skipped"}
-    ]
-    if not active_statuses or all(status == "unavailable" for status in active_statuses):
-        scan_status = "unavailable"
-    elif any(status == "unavailable" for status in active_statuses) or any(
-        status == "not_configured" for status in provider_statuses
-    ):
-        scan_status = "partial"
-    else:
-        scan_status = "completed"
+    scan_status = get_scan_status(provider_results)
 
     run = ScanRun(
         user_id=user_id,
@@ -578,6 +581,34 @@ def scan_brand_on_demand(
         )
     domain = normalize_domain(data.domain)
     return execute_scan(db, user.id, name, domain)
+
+
+@app.post("/api/public/scans")
+@limiter.limit("5/hour")
+def scan_brand_without_saving(
+    request: Request,
+    data: ScanInput,
+):
+    name = data.brand_name.strip()
+    if not name:
+        raise HTTPException(400, "Brand name cannot be empty.")
+    if not data.external_lookup_consent:
+        raise HTTPException(
+            400,
+            "Consent to send the brand name and domain to external providers "
+            "before scanning.",
+        )
+    domain = normalize_domain(data.domain)
+    findings, provider_results = scan_brand(name, domain)
+    return {
+        "id": None,
+        "brand_name": name,
+        "domain": domain,
+        "scan_status": get_scan_status(provider_results),
+        "provider_results": provider_results,
+        "findings": findings,
+        "created_at": datetime.now(timezone.utc),
+    }
 
 
 @app.get("/api/scans")
