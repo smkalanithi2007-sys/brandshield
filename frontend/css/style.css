@@ -210,6 +210,12 @@ input, select {
   border-radius: 8px;
 }
 
+input[type="checkbox"] {
+  width: auto;
+  margin: 0 8px 0 0;
+  vertical-align: middle;
+}
+
 input:focus, select:focus {
   outline: 2px solid #5298e8;
   outline-offset: 1px;
