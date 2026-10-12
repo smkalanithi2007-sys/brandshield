@@ -5,7 +5,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Literal
+from typing import Annotated
 from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
@@ -77,9 +77,6 @@ class ScanInput(BaseModel):
     brand_name: str = Field(min_length=1, max_length=100)
     domain: str = Field(default="", max_length=255)
     external_lookup_consent: bool = False
-    search_types: list[
-        Literal["social_profiles", "google_play", "app_store", "domain_security"]
-    ] | None = Field(default=None, min_length=1)
 
 
 class ScheduleInput(BaseModel):
@@ -198,19 +195,8 @@ def execute_scan(
     brand_name: str,
     domain: str,
     brand_id: int | None = None,
-    search_types: list[str] | None = None,
 ) -> dict:
-    selected_search_types = (
-        list(search_types) if search_types is not None else [
-            "social_profiles", "google_play", "app_store", "domain_security"
-        ]
-    )
-    if search_types is None:
-        findings, provider_results = scan_brand(brand_name, domain)
-    else:
-        findings, provider_results = scan_brand(
-            brand_name, domain, set(search_types)
-        )
+    findings, provider_results = scan_brand(brand_name, domain)
     scan_status = get_scan_status(provider_results)
     run = ScanRun(
         user_id=user_id,
@@ -244,7 +230,6 @@ def execute_scan(
         "id": run.id,
         "brand_name": run.brand_name,
         "domain": run.domain,
-        "search_types": selected_search_types,
         "scan_status": run.scan_status,
         "provider_results": provider_results,
         "findings": [finding_record(item) for item in stored_findings],
@@ -594,9 +579,7 @@ def scan_brand_on_demand(
             "before scanning.",
         )
     domain = normalize_domain(data.domain)
-    return execute_scan(
-        db, user.id, name, domain, search_types=data.search_types
-    )
+    return execute_scan(db, user.id, name, domain)
 
 
 @app.post("/api/public/scans")
@@ -615,19 +598,11 @@ def scan_brand_without_saving(
             "before scanning.",
         )
     domain = normalize_domain(data.domain)
-    if data.search_types is None:
-        findings, provider_results = scan_brand(name, domain)
-    else:
-        findings, provider_results = scan_brand(
-            name, domain, set(data.search_types)
-        )
+    findings, provider_results = scan_brand(name, domain)
     return {
         "id": None,
         "brand_name": name,
         "domain": domain,
-        "search_types": data.search_types or [
-            "social_profiles", "google_play", "app_store", "domain_security"
-        ],
         "scan_status": get_scan_status(provider_results),
         "provider_results": provider_results,
         "findings": findings,
