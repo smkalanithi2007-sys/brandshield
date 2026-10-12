@@ -1,4 +1,5 @@
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from typing import Any
@@ -128,50 +129,7 @@ def _check_webrisk(client: httpx.Client, url: str) -> tuple[ProviderResult, list
             "severity": "High",
             "title": "Google Web Risk returned a threat match",
             "url": url,
-            "details": (
-                "The submitted official-domain URL matched a configured "
-                "Google Web Risk threat type: "
-                f"{', '.join(types)}. Verify this result with the provider."
-            ),
-        }],
-    )
-
-
-def _check_virustotal(
-    client: httpx.Client, domain: str
-) -> tuple[ProviderResult, list[dict]]:
-    api_key = os.getenv("VIRUSTOTAL_API_KEY")
-    if not api_key:
-        return (
-            ProviderResult("VirusTotal", "not_configured",
-                           "Set VIRUSTOTAL_API_KEY to enable lookups."),
-            [],
-        )
-
-    try:
-        response = client.get(
-            f"https://www.virustotal.com/api/v3/domains/{quote(domain, safe='')}",
-            headers={"x-apikey": api_key},
-        )
-        if response.status_code == 404:
-            return ProviderResult(
-                "VirusTotal", "checked",
-                "No existing domain report was found; this is not a clean verdict.",
-            ), []
-        response.raise_for_status()
-        payload = response.json()
-        if not isinstance(payload, dict):
-            raise ValueError("VirusTotal response is not an object.")
-        attributes = payload["data"]["attributes"]
-        if not isinstance(attributes, dict):
-            raise ValueError("VirusTotal attributes are not an object.")
-        stats = attributes.get("last_analysis_stats", {})
-        if not isinstance(stats, dict):
-            raise ValueError("VirusTotal statistics are not an object.")
-    except httpx.HTTPStatusError as error:
-        return ProviderResult(
-            "VirusTotal", "unavailable", _error_message(error.response)
-        ), []
+            "details": f"Unverified catalog match. Listed publisher: {str(item.get('artistName') or 'Unknown publisher')[:300]}. Compare the developer and official links; a name match alone does not indicate a fake app.", []
     except (httpx.RequestError, ValueError, KeyError, TypeError):
         return ProviderResult(
             "VirusTotal", "unavailable",
@@ -212,49 +170,7 @@ def _check_virustotal(
             "title": f"Existing domain report has {malicious + suspicious} "
                      "detections",
             "url": f"https://www.virustotal.com/gui/domain/{quote(domain, safe='')}",
-            "details": (
-                f"Existing report counts: {malicious} malicious and "
-                f"{suspicious} suspicious. Vendor results can disagree; "
-                "review the provider report."
-            ),
-        }],
-    )
-
-
-def _brave_search(
-    client: httpx.Client,
-    query: str,
-    category: str,
-) -> tuple[ProviderResult, list[dict]]:
-    api_key = os.getenv("BRAVE_SEARCH_API_KEY")
-    provider = "Brave Search"
-    if not api_key:
-        return (
-            ProviderResult(provider, "not_configured",
-                           "Set BRAVE_SEARCH_API_KEY to enable search discovery."),
-            [],
-        )
-
-    try:
-        response = client.get(
-            "https://api.search.brave.com/res/v1/web/search",
-            params={"q": query, "count": 10},
-            headers={"X-Subscription-Token": api_key},
-        )
-        response.raise_for_status()
-        payload = response.json()
-        if not isinstance(payload, dict):
-            raise ValueError("Brave Search response is not an object.")
-        web = payload.get("web", {})
-        if not isinstance(web, dict):
-            raise ValueError("Brave Search results are not an object.")
-        items = web.get("results", [])
-        if not isinstance(items, list):
-            raise ValueError("Brave Search results are not a list.")
-    except httpx.HTTPStatusError as error:
-        return ProviderResult(
-            provider, "unavailable", _error_message(error.response)
-        ), []
+            "details": f"Unverified catalog match. Listed publisher: {str(item.get('artistName') or 'Unknown publisher')[:300]}. Compare the developer and official links; a name match alone does not indicate a fake app.", []
     except (httpx.RequestError, ValueError, TypeError):
         return ProviderResult(
             provider, "unavailable",
@@ -274,20 +190,7 @@ def _brave_search(
             "severity": "Informational",
             "title": str(item.get("title") or "Search result")[:500],
             "url": result_url[:2000],
-            "details": (
-                "Unverified search-result lead. Search results do not prove "
-                "impersonation, fraud, or app safety; investigate the "
-                "publisher and evidence before acting. "
-                f"{str(item.get('description') or '')[:1000]}"
-            ),
-        })
-
-    return (
-        ProviderResult(
-            provider, "checked",
-            f"Found {len(findings)} unverified search-result lead(s).",
-            len(findings),
-        ),
+            "details": f"Unverified catalog match. Listed publisher: {str(item.get('artistName') or 'Unknown publisher')[:300]}. Compare the developer and official links; a name match alone does not indicate a fake app.",
         findings,
     )
 
@@ -324,17 +227,14 @@ def _apple_search(
 
     findings = [{
         "source": "Apple App Store Search",
-        "category": "App-store candidate",
+        "category": "App-store listing match",
         "severity": "Informational",
         "title": str(item.get("trackName") or "App Store result")[:500],
         "url": str(item.get("trackViewUrl") or "")[:2000],
-        "details": (
-            "Unverified public catalog match. Confirm the developer/publisher "
-            "and official links; a name match alone does not indicate a fake app."
-        ),
+        "details": f"Unverified catalog match. Listed publisher: {str(item.get('artistName') or 'Unknown publisher')[:300]}. Compare the developer and official links; a name match alone does not indicate a fake app.",
     } for item in items
         if isinstance(item, dict)
-        and str(item.get("trackViewUrl", "")).startswith("https://")]
+        and str(item.get("trackViewUrl", "")).startswith("https://") and re.sub(r"[^a-z0-9]", "", brand_name.casefold()) in re.sub(r"[^a-z0-9]", "", (str(item.get("trackName") or "") + " " + str(item.get("artistName") or "")).casefold())]
     return (
         ProviderResult(
             "Apple App Store Search", "checked",
