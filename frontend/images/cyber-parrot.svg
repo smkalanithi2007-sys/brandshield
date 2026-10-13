@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Cyber parrot</title>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#102b40"/>
+      <stop offset="1" stop-color="#07111f"/>
+    </linearGradient>
+    <linearGradient id="feather" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#63fff0"/>
+      <stop offset="1" stop-color="#00a9d4"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="17" fill="url(#panel)" stroke="#18e0cf" stroke-opacity=".65" stroke-width="1.5"/>
+  <path d="M8 18h9m30 0h9M8 48h10m28 0h10M13 13v5m38-5v5M13 46v5m38-5v5" fill="none" stroke="#18e0cf" stroke-linecap="round" stroke-opacity=".42" stroke-width="1.5"/>
+  <path d="m23 17 5-7 3 7 5-6 2 8" fill="none" stroke="#63fff0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+  <path d="M19 43c-4-5-5-12-2-18 3-7 10-11 18-10 6 1 10 5 12 10l8 5-9 5c-1 8-7 14-16 14h-8l2-6z" fill="url(#feather)" stroke="#a5fff7" stroke-linejoin="round" stroke-width="1"/>
+  <path d="m45 25 12 5-11 5c1-4 0-7-1-10z" fill="#ffc857" stroke="#ffe3a0" stroke-linejoin="round" stroke-width="1"/>
+  <circle cx="39" cy="23" r="4.2" fill="#07111f" stroke="#a5fff7" stroke-width="1.5"/>
+  <circle cx="40" cy="23" r="1.7" fill="#ffffff"/>
+  <path d="M20 43c4 2 8 3 13 2m-9-13 5 2m-6 3 6 2" fill="none" stroke="#087e9a" stroke-linecap="round" stroke-width="1.7"/>
+  <path d="M26 49v5m5-5v5" stroke="#ffc857" stroke-linecap="round" stroke-width="2"/>
+  <path d="M21 55h14" stroke="#18e0cf" stroke-linecap="round" stroke-opacity=".8" stroke-width="1.5"/>
+</svg>
